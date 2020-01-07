@@ -1,3 +1,18 @@
+/*
+* Written by:Katie Donahoe (2018-2019)
+* Purpose: Allows a user to view and apply filters on a set of two 2-Dimensional images obtained from a stereo camera set-up
+           and output a 3-Dimensional anaglyph image.
+* Description: Developed in C# utilizing library AForge.NET, an open-source C# framework for developers in Computer Vision.
+* Main Features:
+*   Re-coloring, linear correction, convolution,and correction filters
+*   Produces 3-D anaglyph real-time as filters are applied
+*   Produces sobel transform image real-time as filters are applied
+*   Produces difference image of filtered images real-time as filters are applied
+*   Allows user to save filtered 2-D images, sobel image, difference image, and anaglyph image
+*   Displays RGB histograms (and mean,median,std dev values) for each 2-D image that adjusts real-time as filters are applied
+*/
+
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -15,20 +30,24 @@ namespace viewerGui
 {
     public partial class Form1 : Form
     {
+        //initialize video reader and writer
         AForge.Video.FFMPEG.VideoFileReader reader = new AForge.Video.FFMPEG.VideoFileReader();
         AForge.Video.FFMPEG.VideoFileWriter writer = new AForge.Video.FFMPEG.VideoFileWriter();
 
-        Bitmap origRightImage = new Bitmap(@"C:\Users\donahoeke\Desktop\Senior Design\right_image.png");
-        Bitmap origLeftimage = new Bitmap(@"C:\Users\donahoeke\Desktop\Senior Design\left_image.png");
-        Bitmap filtered_left = new Bitmap(@"C:\Users\donahoeke\Desktop\Senior Design\left_image.png");
-        Bitmap filtered_right = new Bitmap(@"C:\Users\donahoeke\Desktop\Senior Design\right_image.png");
-        Bitmap left_stats = new Bitmap(@"C:\Users\donahoeke\Desktop\Senior Design\transparent.bmp");
-        Bitmap right_stats = new Bitmap(@"C:\Users\donahoeke\Desktop\Senior Design\transparent.bmp");
-        Bitmap resultImage = new Bitmap(@"C:\Users\donahoeke\Desktop\Senior Design\transparent.bmp");
-        Bitmap diffImage = new Bitmap(@"C:\Users\donahoeke\Desktop\Senior Design\transparent.bmp");
-        Bitmap sobelImageLeft = new Bitmap(@"C:\Users\donahoeke\Desktop\Senior Design\right_image.png");
-        Bitmap sobelImageRight = new Bitmap(@"C:\Users\donahoeke\Desktop\Senior Design\transparent.bmp");
+        //Bitmaps of all imagery in GUI
+        Bitmap origRightImage = new Bitmap(@"C:\Users\donahoeke\Desktop\Senior_Design\right_image.png");
+        Bitmap origLeftimage = new Bitmap(@"C:\Users\donahoeke\Desktop\Senior_Design\left_image.png");
+        Bitmap filtered_left = new Bitmap(@"C:\Users\donahoeke\Desktop\Senior_Design\left_image.png");
+        Bitmap filtered_right = new Bitmap(@"C:\Users\donahoeke\Desktop\Senior_Design\right_image.png");
+        Bitmap left_stats = new Bitmap(@"C:\Users\donahoeke\Desktop\Senior_Design\transparent.bmp");
+        Bitmap right_stats = new Bitmap(@"C:\Users\donahoeke\Desktop\Senior_Design\transparent.bmp");
+        Bitmap resultImage = new Bitmap(@"C:\Users\donahoeke\Desktop\Senior_Design\transparent.bmp");
+        Bitmap diffImage = new Bitmap(@"C:\Users\donahoeke\Desktop\Senior_Design\transparent.bmp");
+        Bitmap sobelImageLeft = new Bitmap(@"C:\Users\donahoeke\Desktop\Senior_Design\right_image.png");
+        Bitmap sobelImageRight = new Bitmap(@"C:\Users\donahoeke\Desktop\Senior_Design\transparent.bmp");
 
+        //initialize filters
+        //Note: do not change numerical values.
         AForge.Imaging.Filters.StereoAnaglyph filter = new AForge.Imaging.Filters.StereoAnaglyph();
         AForge.Imaging.Filters.Grayscale grayscaleFilter = new AForge.Imaging.Filters.Grayscale(0.2125, 0.7154, 0.0721);
         AForge.Imaging.Filters.Sepia sepiaFilter = new AForge.Imaging.Filters.Sepia();
@@ -50,9 +69,6 @@ namespace viewerGui
 
         Boolean brtFlag = false;
 
-        //   AForge.Imaging.ImageStatistics leftStats = new AForge.Imaging.ImageStatistics(origLeftimage);
-        //   AForge.Imaging.ImageStatistics rightStats = new AForge.Imaging.ImageStatistics(origRightImage);
-
         public Form1()
         {
             InitializeComponent();
@@ -63,6 +79,7 @@ namespace viewerGui
             setUpToolTips();
         }
 
+        //updates all imagery every time a filter is applied, or a new image is loaded
         private void update(Bitmap leftImage, Bitmap rightImage)
         {
             apply3D(leftImage, rightImage,"color");
@@ -71,6 +88,8 @@ namespace viewerGui
             displaySobel(leftImage, rightImage);
             orig_pictureBox.Image = origLeftimage;
         }
+        
+        //displays difference image, derived from two images
         private void displayDiff(Bitmap leftImage, Bitmap rightImage)
         {
             AForge.Imaging.Filters.Difference diffFilter = new AForge.Imaging.Filters.Difference(leftImage);
@@ -78,6 +97,7 @@ namespace viewerGui
             diff_pictureBox.Image = diffImage;
         }
 
+        //Applies and displays sobel edge detection (only displays left)
         private void displaySobel(Bitmap leftImage, Bitmap rightImage)
         {
             try
@@ -98,17 +118,12 @@ namespace viewerGui
                 sobelImageLeft = left_resultImage;
                 sobelImageRight = right_resultImage;
             }
-           
-            
-            // sobel_right_pictureBox.Image = right_resultImage;
-        }
+   }
+        //creates RGB historgrams from image data
         private void statistics(Bitmap leftImage, Bitmap rightImage)
         {
             try
             {
-
-                // this.WindowState = FormWindowState.Maximized;
-
                 AForge.Imaging.ImageStatistics leftStats = new AForge.Imaging.ImageStatistics(leftImage);
                 AForge.Imaging.ImageStatistics rightStats = new AForge.Imaging.ImageStatistics(rightImage);
                 
@@ -118,8 +133,8 @@ namespace viewerGui
                 AForge.Math.Histogram histogram_rr = rightStats.Red;
                 AForge.Math.Histogram histogram_gr = rightStats.Green;
                 AForge.Math.Histogram histogram_br = rightStats.Blue;
-
-
+                
+                //populates and updates the RGB rows
                 try
                 {
                     lstats_dataGridView.Rows.RemoveAt(2);
@@ -129,8 +144,7 @@ namespace viewerGui
                     rstats_dataGridView.Rows.RemoveAt(1);
                     rstats_dataGridView.Rows.RemoveAt(0);
                 }
-                catch (Exception Ex) {
-                }
+                catch (Exception Ex) {}
                 string[] rowl0 = new string[] { histogram_rl.Mean.ToString(), histogram_rl.Median.ToString(), histogram_rl.StdDev.ToString() };
                 lstats_dataGridView.Rows.Add(rowl0);
                 string[] rowl1 = new string[] { histogram_gl.Mean.ToString(), histogram_gl.Median.ToString(), histogram_gl.StdDev.ToString() };
@@ -188,14 +202,19 @@ namespace viewerGui
                 Pen green = new Pen(semiGreen, 1);
                 var semiBlue = Color.FromArgb(128, Color.Blue);
                 Pen blue = new Pen(semiBlue, 1);
+                
+                //scales and draws histograms
                 using (Graphics g = Graphics.FromImage(left_stats))
                 {
+                    float pct_r = 0f;
+                    float pct_g = 0f;
+                    float pct_b = 0f;
                     for (int i = 1; i < 256; i++)
                     {
-                        float pct_r = histogram_rl.Values[i] / histogram_rl.Max;
-                        float pct_g = histogram_gl.Values[i] / histogram_gl.Max;
-                        float pct_b = histogram_bl.Values[i] / histogram_bl.Max;
-
+                        pct_r = histogram_rl.Values[i] / histogram_rl.Max;
+                        pct_g = histogram_gl.Values[i] / histogram_gl.Max;
+                        pct_b = histogram_bl.Values[i] / histogram_bl.Max;
+                        
                         g.DrawLine(red,
                             new Point(i, left_stats.Height - 5),
                             new Point(i, left_stats.Height - 5 - (int)(pct_r * histHeight))
@@ -213,11 +232,14 @@ namespace viewerGui
 
                 using (Graphics g = Graphics.FromImage(right_stats))
                 {
+                    float pct_r = 0f;
+                    float pct_g = 0f;
+                    float pct_b = 0f;
                     for (int i = 1; i < 256; i++)
                     {
-                        float pct_r = histogram_rr.Values[i] / histogram_rr.Max;
-                        float pct_g = histogram_gr.Values[i] / histogram_gr.Max;
-                        float pct_b = histogram_br.Values[i] / histogram_br.Max;
+                        pct_r = histogram_rr.Values[i] / histogram_rr.Max;
+                        pct_g = histogram_gr.Values[i] / histogram_gr.Max;
+                        pct_b = histogram_br.Values[i] / histogram_br.Max;
 
 
                         g.DrawLine(red,
