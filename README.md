@@ -14,3 +14,5 @@ Main Features:
 - Produces difference image of filtered images real-time as filters are applied
 - Allows user to save filtered 2-D images, sobel image, difference image, and anaglyph image
 - Displays RGB histograms (and mean,median,std dev values) for each 2-D image that adjusts real-time as filters are applied
+
+![](image_viewer.PNG)
